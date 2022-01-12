@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang= "pl" xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head">
+</head>
+<body>
+<div class="container">
+<div th:include="layout :: navigationPanel"></div>
+<!--<h1 th:text="'Witaj ' +${user.name} + ' ' + ${user.surname}"></h1>-->
+    <h1>Ostatnie próby logowania</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Adres IP</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="log: ${logins}">
+                <td th:text="${log.date}" />
+                <td th:text="${log.ip}" />
+                <td th:text="${log.success} ? 'Sukces' : 'Próba nie powiodła się'" />
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>Zarejestrowane adresy IP</h1>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Ip</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="lip: ${login_ips}">
+            <td th:text="${lip.ip}" />
+            <td th:if="${lip.permanent_blockade}"><a class="btn btn-danger" th:href="@{/blockade/remove(ip_id=${lip.id})}" >Usuń blokadę</a></td>
+        </tr>
+        </tbody>
+    </table>
+<div th:include="layout :: footer"></div>
+</div>
+</body>
+</html>
+

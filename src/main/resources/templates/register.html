@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang= "pl" xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head">
+</head>
+<body>
+<div class="container">
+<div th:include="layout :: navigationPanel"></div>
+<h1>Rejestracja:</h1>
+<form th:action="@{/register}" method="POST" th:object="${user}">
+  <input class="form-control" type="text" th:field="*{login}" placeholder="Login"/><br />
+  <input class="form-control" type="email" th:field="*{email}" placeholder="Email"/><br />
+  <input class="form-control" type="password" th:field="*{password_hash}" placeholder="Hasło"/><br />
+  <input class="form-check-input" type="checkbox" th:field="*{is_password_kept_as_hash}"/> Trzymaj hasło jako hash<br />
+  <button class="btn btn-primary" type="submit">Zarejestruj się</button>
+</form>
+<div th:include="layout :: footer"></div>
+</div>
+</body>
+</html>

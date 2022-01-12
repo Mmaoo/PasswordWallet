@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang= "pl" xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head">
+</head>
+<body>
+<div class="container">
+<div th:include="layout :: navigationPanel"></div>
+<h1>Logowanie do systemu:</h1>
+<form th:action="@{/login}" method="POST">
+    <input class="form-control" type="text" name="login" placeholder="Login"/><br />
+    <input class="form-control" type="password" name="passwd" placeholder="Hasło"/><br />
+    <button class="btn btn-primary" type="submit">Zaloguj się</button>
+</form><br />
+    <div th:if="${error != null}" th:text="${error}" class="alert alert-danger alert-dismissible fade show"></div>
+<div th:include="layout :: footer"></div>
+</div>
+</body>
+</html>
