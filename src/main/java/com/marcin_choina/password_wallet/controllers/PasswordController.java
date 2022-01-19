@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ import com.marcin_choina.password_wallet.repositories.SharedPasswordRepository;
 import com.marcin_choina.password_wallet.repositories.UserRepository;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -28,10 +30,14 @@ import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 @Controller
 public class PasswordController {
+
+    @Resource
+    public Environment environment;
 
     @Autowired
     private PasswordRepository passwordRepository;
@@ -160,7 +166,7 @@ public class PasswordController {
                         dbPassword.setWeb_address(password.getWeb_address());
                         for(SharedPassword sharedPassword : dbPassword.getSharedPasswords()){
                             sharedPassword.setPassword(password.getPassword());
-                            sharedPassword.setPassword(encryptSharedPassword(sharedPassword,request).getPassword());
+                            sharedPassword.setPassword(encryptSharedPassword(sharedPassword).getPassword());
                             sharedPasswordRepository.save(sharedPassword);
                         }
                         passwordRepository.save(dbPassword);
@@ -191,6 +197,21 @@ public class PasswordController {
         return "redirect:/passwords/show/edit";
     }
 
+    @GetMapping("/passwords/shared/remove/{id}")
+    public String sharedPasswordRemovePage(@PathVariable Integer id,
+                                     HttpServletRequest request,
+                                     Principal principal){
+        Optional<SharedPassword> sharedPasswordOptional = sharedPasswordRepository.findById(id);
+        if(sharedPasswordOptional.isPresent()){
+            SharedPassword sharedPassword = sharedPasswordOptional.get();
+            User user = userRepository.findByLogin(principal.getName());
+            if(sharedPassword.getUser() == user || sharedPassword.getMainPassword().getUser() == user){
+                sharedPasswordRepository.delete(sharedPassword);
+            }
+        }
+        return "redirect:/passwords/show/edit";
+    }
+
     @ResponseBody
     @PostMapping(value = "/api/passwords/decrypt")
     public ResponseEntity<String> passwordDecryptApi(
@@ -210,7 +231,7 @@ public class PasswordController {
                     if(password.getUser() == userRepository.findByLogin(principal.getName())) {
 //                    Key key = AESenc.generateKey(md5Pass);
 //                    String encPass = AESenc.decrypt(password.getPassword(), key);
-                        decryptSharedPassword(password,request);
+                        decryptSharedPassword(password);
                         String encPass = password.getPassword();
                         return ResponseEntity.ok("{\"enc_pass\":\"" + encPass + "\"}");
                     }
@@ -261,7 +282,7 @@ public class PasswordController {
                         sharedPassword.setUser(newUser);
                         sharedPassword.setMainPassword(password);
                         sharedPassword.setPassword(decPass);
-                        this.encryptSharedPassword(sharedPassword,request);
+                        this.encryptSharedPassword(sharedPassword);
                         sharedPasswordRepository.save(sharedPassword);
                         return ResponseEntity.ok("{\"status\":\"shared\"}");
                     }else return ResponseEntity.ok("{\"status\":\"authentication denied\"}");
@@ -274,15 +295,15 @@ public class PasswordController {
 //        return null;
     }
 
-    private SharedPassword encryptSharedPassword(SharedPassword sharedPassword,HttpServletRequest request) throws Exception {
-        Key key = AESenc.generateKey(MD5Enc.calculateMD5(sharedPassword.getMainPassword().getPassword()));
+    private SharedPassword encryptSharedPassword(SharedPassword sharedPassword) throws Exception {
+        Key key = AESenc.generateKey(MD5Enc.calculateMD5(environment.getProperty("shared_password_key")));
         String encpPass = AESenc.encrypt(sharedPassword.getPassword(),key);
         sharedPassword.setPassword(encpPass);
         return sharedPassword;
     }
 
-    private SharedPassword decryptSharedPassword(SharedPassword sharedPassword,HttpServletRequest request) throws Exception {
-        Key key = AESenc.generateKey(MD5Enc.calculateMD5(sharedPassword.getMainPassword().getPassword()));
+    private SharedPassword decryptSharedPassword(SharedPassword sharedPassword) throws Exception {
+        Key key = AESenc.generateKey(MD5Enc.calculateMD5(environment.getProperty("shared_password_key")));
         String decPass = AESenc.decrypt(sharedPassword.getPassword(),key);
         sharedPassword.setPassword(decPass);
         return sharedPassword;

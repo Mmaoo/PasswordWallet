@@ -85,3 +85,8 @@ function showShareBox(id){
             });
     }
 }
+
+function showSharedTable(id){
+    var p = $('#shared_table_'+id).prop('hidden');
+    $('#shared_table_'+id).prop('hidden',!p);
+}
